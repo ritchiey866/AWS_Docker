@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import btn_primary, table_head_cell, empty_state, link_action, page_header %}
+
+{% block title %}Database Tables{% endblock %}
+
+{% block content %}
+{% call page_header("Database Tables", "Browse and manage PostgreSQL tables") %}
+    {{ btn_primary("+ Create Table", href=url_for('db_admin.create_table_view')) }}
+{% endcall %}
+
+{% if tables %}
+<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50/80">
+                <tr>
+                    {{ table_head_cell("Table") }}
+                    {{ table_head_cell("Rows") }}
+                    {{ table_head_cell("Primary Key") }}
+                    {{ table_head_cell("Actions") }}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+                {% for table in tables %}
+                <tr class="transition hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <a href="{{ url_for('db_admin.table_detail', table_name=table.name) }}" class="font-semibold text-indigo-600 hover:text-indigo-700">{{ table.name }}</a>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">{{ table.row_count }}</span>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-xs text-slate-600">{{ table.primary_key | join(', ') if table.primary_key else '—' }}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            {{ link_action("Browse", href=url_for('db_admin.table_detail', table_name=table.name)) }}
+                            {% if not table.is_system %}
+                            <form method="post" action="{{ url_for('db_admin.drop_table_view', table_name=table.name) }}" class="inline" onsubmit="return confirm('Drop table {{ table.name }}? This cannot be undone.');">
+                                <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Drop</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{{ empty_state("No tables found.") }}
+{% endif %}
+{% endblock %}

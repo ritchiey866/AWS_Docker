@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Flask App{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        glow: '0 0 40px -10px rgba(99, 102, 241, 0.45)',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 999px; }
+
+        /* Sidebar collapse — custom classes avoid Tailwind utility conflicts */
+        body.sidebar-collapsed #sidebar { display: none !important; }
+        #sidebar-expand {
+            display: none;
+            position: fixed;
+            left: 1rem;
+            top: 1rem;
+            z-index: 50;
+            width: 2.75rem;
+            height: 2.75rem;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #334155;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+            cursor: pointer;
+        }
+        #sidebar-expand:hover { border-color: #c7d2fe; color: #4f46e5; }
+        body.sidebar-collapsed #sidebar-expand { display: flex !important; }
+
+        /* Native expandable menus (<details>/<summary>) */
+        .nav-details { padding-top: 0.25rem; }
+        .nav-summary {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-radius: 0.75rem;
+            padding: 0.625rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .nav-summary::-webkit-details-marker { display: none; }
+        .nav-summary::marker { content: ""; display: none; }
+        .nav-summary:hover { background: rgba(30, 41, 59, 0.8); color: #fff; }
+        .nav-chevron { transition: transform 0.2s ease; }
+        .nav-details[open] .nav-chevron { transform: rotate(180deg); }
+        .nav-submenu {
+            margin-top: 0.25rem;
+            padding-left: 2.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+        .nav-sublink {
+            display: block;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.15s, background-color 0.15s;
+        }
+        .nav-sublink:hover { color: #fff; background: rgba(30, 41, 59, 0.5); }
+        .nav-sublink-active { color: #a5b4fc !important; font-weight: 600; }
+    </style>
+</head>
+<body class="h-full font-sans antialiased {% if current_user %}flex min-h-full bg-slate-100{% else %}min-h-full bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950{% endif %} {% block body_class %}{% endblock %}">
+    {% if not current_user %}
+    <div class="pointer-events-none fixed inset-0 overflow-hidden">
+        <div class="absolute -left-40 top-0 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl"></div>
+        <div class="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl"></div>
+    </div>
+    {% endif %}
+    {% if current_user %}
+        {% include "_sidebar.html" %}
+    {% endif %}
+
+    <div class="main-wrapper flex min-h-full min-w-0 flex-1 flex-col {% if not current_user %}w-full{% endif %}">
+        <main class="{% if current_user %}p-6 sm:p-8 lg:p-10{% else %}flex min-h-full flex-1 items-center justify-center p-6{% endif %}">
+            <div class="{% if current_user %}mx-auto w-full max-w-6xl{% else %}w-full max-w-md{% endif %}">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-6 space-y-3">
+                            {% for category, message in messages %}
+                                <div class="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm
+                                    {% if category == 'error' %}border-rose-200 bg-rose-50 text-rose-800
+                                    {% else %}border-emerald-200 bg-emerald-50 text-emerald-800{% endif %}">
+                                    <span class="mt-0.5 font-semibold">{% if category == 'error' %}!{% else %}&#10003;{% endif %}</span>
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    {% if current_user %}
+    <script>
+    (function () {
+        var KEY = "sidebar-collapsed";
+        var body = document.body;
+        var collapseBtn = document.getElementById("sidebar-collapse");
+        var expandBtn = document.getElementById("sidebar-expand");
+
+        function setCollapsed(collapsed) {
+            body.classList.toggle("sidebar-collapsed", collapsed);
+            try { localStorage.setItem(KEY, collapsed ? "1" : "0"); } catch (e) {}
+        }
+
+        if (localStorage.getItem(KEY) === "1") {
+            setCollapsed(true);
+        }
+
+        if (collapseBtn) {
+            collapseBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                setCollapsed(true);
+            });
+        }
+
+        if (expandBtn) {
+            expandBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                setCollapsed(false);
+            });
+        }
+    })();
+    </script>
+    {% endif %}
+</body>
+</html>

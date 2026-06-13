@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: flask_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-appuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apppass}
+      POSTGRES_DB: ${POSTGRES_DB:-appdb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-appuser} -d ${POSTGRES_DB:-appdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flask_web
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-appuser}:${POSTGRES_PASSWORD:-apppass}@db:5432/${POSTGRES_DB:-appdb}
+      FLASK_APP: app.wsgi:app
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: flask_nginx
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./app/static:/app/static:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

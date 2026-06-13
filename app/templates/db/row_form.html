@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import btn_primary, btn_secondary, card, card_inner %}
+
+{% block title %}{{ table_name }} — {{ action }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">{{ "Edit Row" if action == "edit" else "New Row" }}</h1>
+    <p class="mt-1 text-sm text-slate-500">Table: <span class="font-mono font-semibold text-indigo-600">{{ table_name }}</span></p>
+</div>
+
+{% call card() %}
+{% call card_inner() %}
+<form method="post" class="space-y-5">
+    {% if action == "edit" %}
+        {% for col, val in pk_values.items() %}
+        <input type="hidden" name="{{ col }}" value="{{ val }}">
+        {% endfor %}
+    {% endif %}
+
+    {% for column in columns %}
+        {% set is_serial_pk = column.primary_key and 'serial' in column.type.lower() %}
+        <div class="space-y-2">
+            {% if action == 'edit' and is_serial_pk %}
+                <label class="block text-sm font-semibold text-slate-700">{{ column.name }}</label>
+                <input type="text" value="{{ row[column.name] }}" disabled
+                       class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500">
+            {% else %}
+                <label for="{{ column.name }}" class="block text-sm font-semibold text-slate-700">
+                    {{ column.name }}{% if column.primary_key %} <span class="text-rose-500">*</span>{% endif %}
+                    <span class="ml-1 font-normal text-slate-400">({{ column.type }})</span>
+                </label>
+
+                {% if 'boolean' in column.type.lower() %}
+                <select id="{{ column.name }}" name="{{ column.name }}" {% if not column.nullable and action == 'create' %}required{% endif %}
+                        class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
+                    <option value="">—</option>
+                    <option value="true" {% if row.get(column.name) == True %}selected{% endif %}>true</option>
+                    <option value="false" {% if row.get(column.name) == False %}selected{% endif %}>false</option>
+                </select>
+                {% elif 'text' in column.type.lower() %}
+                <textarea id="{{ column.name }}" name="{{ column.name }}" rows="3" {% if not column.nullable and not is_serial_pk and action == 'create' %}required{% endif %}
+                          class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">{{ row.get(column.name, '') }}</textarea>
+                {% else %}
+                <input type="text" id="{{ column.name }}" name="{{ column.name }}"
+                       value="{{ row.get(column.name, '') if row.get(column.name) is not none else '' }}"
+                       {% if not column.nullable and not is_serial_pk and action == 'create' %}required{% endif %}
+                       {% if is_serial_pk %}placeholder="Leave blank for auto-increment"{% endif %}
+                       class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-6">
+        {{ btn_primary("Save", type="submit") }}
+        {{ btn_secondary("Cancel", href=url_for('db_admin.table_detail', table_name=table_name)) }}
+    </div>
+</form>
+{% endcall %}
+{% endcall %}
+{% endblock %}

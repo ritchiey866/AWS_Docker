@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import btn_primary, btn_secondary, input_field, textarea_field, card, card_inner %}
+
+{% block title %}{{ item.name if item else "New Item" }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">{{ "Edit Item" if item else "New Item" }}</h1>
+    <p class="mt-1 text-sm text-slate-500">{{ "Update item details" if item else "Add a new item to the catalog" }}</p>
+</div>
+
+{% call card() %}
+{% call card_inner() %}
+<form method="post" class="space-y-6">
+    {{ input_field("name", "Name", item.name if item else '', required=true, placeholder="Item name") }}
+    {{ textarea_field("description", "Description", item.description if item and item.description else '') }}
+
+    <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-6">
+        {{ btn_primary("Save", type="submit") }}
+        {{ btn_secondary("Cancel", href=url_for('items.list_items')) }}
+    </div>
+</form>
+{% endcall %}
+{% endcall %}
+{% endblock %}

@@ -1,0 +1,75 @@
+<aside id="sidebar" aria-label="Main navigation"
+       class="flex w-72 shrink-0 flex-col border-r border-slate-800/80 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 shadow-2xl shadow-slate-950/50">
+    <div class="flex items-center justify-between border-b border-slate-800/80 px-5 py-5">
+        <a href="{{ url_for('home.dashboard') }}" class="group flex min-w-0 items-center gap-3">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 transition group-hover:scale-105">F</span>
+            <div class="min-w-0">
+                <span class="block truncate text-sm font-bold text-white">Flask App</span>
+                <span class="block truncate text-xs text-slate-500">PostgreSQL Admin</span>
+            </div>
+        </a>
+        <button type="button" id="sidebar-collapse" aria-label="Collapse navigation" title="Collapse navigation"
+                class="rounded-lg border border-slate-700 p-2 text-slate-400 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+    </div>
+
+    <nav class="sidebar-scroll flex-1 overflow-y-auto px-3 py-4">
+        <div class="space-y-1">
+            <a href="{{ url_for('home.dashboard') }}"
+               class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition
+               {% if current_endpoint == 'home.dashboard' %}bg-indigo-500/15 text-indigo-300 ring-1 ring-inset ring-indigo-500/30{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>Dashboard</span>
+            </a>
+
+            <details class="nav-details" {% if items_active %}open{% endif %}>
+                <summary class="nav-summary">
+                    <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                    <span class="flex-1">Items</span>
+                    <svg class="nav-chevron h-4 w-4 shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="nav-submenu">
+                    <a href="{{ url_for('items.list_items') }}"
+                       class="nav-sublink {% if current_endpoint == 'items.list_items' %}nav-sublink-active{% endif %}">All Items</a>
+                    <a href="{{ url_for('items.create_item') }}"
+                       class="nav-sublink {% if current_endpoint == 'items.create_item' %}nav-sublink-active{% endif %}">New Item</a>
+                </div>
+            </details>
+
+            <details class="nav-details" {% if db_active %}open{% endif %}>
+                <summary class="nav-summary">
+                    <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 12h16"/></svg>
+                    <span class="flex-1">Database</span>
+                    <svg class="nav-chevron h-4 w-4 shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="nav-submenu">
+                    <a href="{{ url_for('db_admin.list_all_tables') }}"
+                       class="nav-sublink {% if current_endpoint == 'db_admin.list_all_tables' %}nav-sublink-active{% endif %}">All Tables</a>
+                    <a href="{{ url_for('db_admin.create_table_view') }}"
+                       class="nav-sublink {% if current_endpoint == 'db_admin.create_table_view' %}nav-sublink-active{% endif %}">Create Table</a>
+                </div>
+            </details>
+        </div>
+    </nav>
+
+    <div class="border-t border-slate-800/80 p-3">
+        <form method="post" action="{{ url_for('auth.logout') }}">
+            <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <span>Logout</span>
+            </button>
+        </form>
+        <div class="mt-2 flex items-center gap-2 rounded-xl bg-slate-800/50 px-3 py-2.5">
+            <span class="relative flex h-2.5 w-2.5">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40"></span>
+                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            </span>
+            <span class="truncate text-xs font-medium text-slate-400">{{ current_user.username }}</span>
+        </div>
+    </div>
+</aside>
+
+<button type="button" id="sidebar-expand" aria-label="Expand navigation" title="Expand navigation">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+</button>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import btn_primary, table_head_cell, empty_state, link_action, page_header %}
+
+{% block title %}Items{% endblock %}
+
+{% block content %}
+{% call page_header("Items", "Manage your application items") %}
+    {{ btn_primary("+ New Item", href=url_for('items.create_item')) }}
+{% endcall %}
+
+{% if items %}
+<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50/80">
+                <tr>
+                    {{ table_head_cell("Name") }}
+                    {{ table_head_cell("Description") }}
+                    {{ table_head_cell("Created") }}
+                    {{ table_head_cell("") }}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+                {% for item in items %}
+                <tr class="transition hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-6 py-4 font-medium text-slate-900">
+                        <a href="{{ url_for('items.view_item', item_id=item.id) }}" class="text-indigo-600 hover:text-indigo-700">{{ item.name }}</a>
+                    </td>
+                    <td class="max-w-xs truncate px-6 py-4 text-slate-600">{{ item.description or "—" }}</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-slate-500">{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="whitespace-nowrap px-6 py-4">{{ link_action("Edit", href=url_for('items.edit_item', item_id=item.id)) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{{ empty_state("No items yet.", "Create your first item", url_for('items.create_item')) }}
+{% endif %}
+{% endblock %}

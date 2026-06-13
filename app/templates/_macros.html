@@ -1,0 +1,101 @@
+{# Primary button #}
+{% macro btn_primary(label, href=none, type='button', extra_classes='') %}
+{% if href %}
+<a href="{{ href }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40 {{ extra_classes }}">{{ label }}</a>
+{% else %}
+<button type="{{ type }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40 {{ extra_classes }}">{{ label }}</button>
+{% endif %}
+{% endmacro %}
+
+{# Secondary button / link #}
+{% macro btn_secondary(label, href='#', extra_classes='') %}
+<a href="{{ href }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 {{ extra_classes }}">{{ label }}</a>
+{% endmacro %}
+
+{# Danger button #}
+{% macro btn_danger(label, type='button', extra_classes='') %}
+<button type="{{ type }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-500/20 transition hover:from-rose-500 hover:to-red-500 {{ extra_classes }}">{{ label }}</button>
+{% endmacro %}
+
+{# Text link #}
+{% macro link_action(label, href='#', danger=false) %}
+<a href="{{ href }}" class="text-sm font-medium {% if danger %}text-rose-600 hover:text-rose-700{% else %}text-indigo-600 hover:text-indigo-700{% endif %} transition">{{ label }}</a>
+{% endmacro %}
+
+{# Page header #}
+{% macro page_header(title, subtitle=none) %}
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">{{ title }}</h1>
+        {% if subtitle %}
+        <p class="mt-1 text-sm text-slate-500">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    {% if caller %}
+    <div class="flex flex-wrap items-center gap-3">{{ caller() }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# Card wrapper #}
+{% macro card(class='') %}
+<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/50 {{ class }}">
+    {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro card_inner(class='p-6 sm:p-8') %}
+<div class="{{ class }}">
+    {{ caller() }}
+</div>
+{% endmacro %}
+
+{# Form input #}
+{% macro input_field(name, label, value='', type='text', required=false, placeholder='', hint=none, disabled=false) %}
+<div class="space-y-2">
+    <label for="{{ name }}" class="block text-sm font-semibold text-slate-700">{{ label }}</label>
+    <input
+        type="{{ type }}"
+        id="{{ name }}"
+        name="{{ name }}"
+        value="{{ value }}"
+        placeholder="{{ placeholder }}"
+        {% if required %}required{% endif %}
+        {% if disabled %}disabled{% endif %}
+        class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+    {% if hint %}<p class="text-xs text-slate-500">{{ hint }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro textarea_field(name, label, value='', rows=4, required=false) %}
+<div class="space-y-2">
+    <label for="{{ name }}" class="block text-sm font-semibold text-slate-700">{{ label }}</label>
+    <textarea
+        id="{{ name }}"
+        name="{{ name }}"
+        rows="{{ rows }}"
+        {% if required %}required{% endif %}
+        class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+    >{{ value }}</textarea>
+</div>
+{% endmacro %}
+
+{# Data table #}
+{% macro table_container() %}
+<div class="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+<table class="min-w-full divide-y divide-slate-200 text-sm">
+{% endmacro %}
+
+{% macro table_head_cell(label) %}
+<th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">{{ label }}</th>
+{% endmacro %}
+
+{% macro empty_state(message, action_label=none, action_href=none) %}
+<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-16 text-center">
+    <p class="text-slate-500">{{ message }}</p>
+    {% if action_label and action_href %}
+    <a href="{{ action_href }}" class="mt-4 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-700">{{ action_label }}</a>
+    {% endif %}
+</div>
+{% endmacro %}

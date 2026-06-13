@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import btn_primary, btn_secondary, table_head_cell, empty_state, link_action, page_header %}
+
+{% block title %}{{ table_name }}{% endblock %}
+
+{% block content %}
+{% call page_header(table_name, total ~ " row(s)") %}
+    {{ btn_primary("+ New Row", href=url_for('db_admin.create_row', table_name=table_name)) }}
+    {{ btn_secondary("All Tables", href=url_for('db_admin.list_all_tables')) }}
+{% endcall %}
+
+{% if columns %}
+<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50/80">
+                <tr>
+                    {% for column in columns %}
+                    {{ table_head_cell(column.name ~ (' *' if column.primary_key else '')) }}
+                    {% endfor %}
+                    {{ table_head_cell("Actions") }}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+                {% for row in rows %}
+                <tr class="transition hover:bg-slate-50/60">
+                    {% for column in columns %}
+                    <td class="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-700">{{ row[column.name] }}</td>
+                    {% endfor %}
+                    <td class="whitespace-nowrap px-6 py-4">
+                        {% if pk_columns %}
+                        <div class="flex items-center gap-3">
+                            <a href="{{ url_for('db_admin.edit_row', table_name=table_name) }}?{% for col in pk_columns %}{{ col }}={{ row[col] | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}"
+                               class="text-sm font-medium text-indigo-600 hover:text-indigo-700">Edit</a>
+                            <form method="post" action="{{ url_for('db_admin.delete_row_view', table_name=table_name) }}" class="inline" onsubmit="return confirm('Delete this row?');">
+                                {% for col in pk_columns %}
+                                <input type="hidden" name="{{ col }}" value="{{ row[col] }}">
+                                {% endfor %}
+                                <button type="submit" class="text-sm font-medium text-rose-600 hover:text-rose-700">Delete</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <span class="text-slate-400">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ columns|length + 1 }}" class="px-6 py-12 text-center text-slate-500">No rows in this table.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<div class="mt-6 flex items-center justify-center gap-4">
+    {% if page > 1 %}
+    <a href="{{ url_for('db_admin.table_detail', table_name=table_name, page=page - 1) }}"
+       class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Previous</a>
+    {% endif %}
+    <span class="text-sm font-medium text-slate-500">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('db_admin.table_detail', table_name=table_name, page=page + 1) }}"
+       class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+{{ empty_state("No columns found.") }}
+{% endif %}
+{% endblock %}
