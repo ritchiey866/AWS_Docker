@@ -2,6 +2,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
 
+PASSWORD_LENGTH = 8
+
 
 class User(db.Model):
     __tablename__ = "users"
@@ -9,6 +11,14 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
+
+    @staticmethod
+    def validate_password(password: str) -> str | None:
+        if len(password) != PASSWORD_LENGTH:
+            return f"Password must be exactly {PASSWORD_LENGTH} characters."
+        if not password.isascii():
+            return "Password must contain only ASCII characters."
+        return None
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)

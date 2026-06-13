@@ -89,20 +89,20 @@
         .nav-sublink-active { color: #a5b4fc !important; font-weight: 600; }
     </style>
 </head>
-<body class="h-full font-sans antialiased {% if current_user %}flex min-h-full bg-slate-100{% else %}min-h-full bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950{% endif %} {% block body_class %}{% endblock %}">
-    {% if not current_user %}
+<body class="h-full font-sans antialiased {% if show_sidebar %}flex min-h-full bg-slate-100{% else %}min-h-full bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950{% endif %} {% block body_class %}{% endblock %}">
+    {% if not show_sidebar %}
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
         <div class="absolute -left-40 top-0 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl"></div>
         <div class="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl"></div>
     </div>
     {% endif %}
-    {% if current_user %}
+    {% if show_sidebar %}
         {% include "_sidebar.html" %}
     {% endif %}
 
-    <div class="main-wrapper flex min-h-full min-w-0 flex-1 flex-col {% if not current_user %}w-full{% endif %}">
-        <main class="{% if current_user %}p-6 sm:p-8 lg:p-10{% else %}flex min-h-full flex-1 items-center justify-center p-6{% endif %}">
-            <div class="{% if current_user %}mx-auto w-full max-w-6xl{% else %}w-full max-w-md{% endif %}">
+    <div class="main-wrapper flex min-h-full min-w-0 flex-1 flex-col {% if not show_sidebar %}w-full{% endif %}">
+        <main class="{% if show_sidebar %}p-6 sm:p-8 lg:p-10{% else %}flex min-h-full flex-1 items-center justify-center p-6{% endif %}">
+            <div class="{% if show_sidebar %}mx-auto w-full max-w-6xl{% else %}w-full max-w-md{% endif %}">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="mb-6 space-y-3">
@@ -123,7 +123,7 @@
         </main>
     </div>
 
-    {% if current_user %}
+    {% if show_sidebar %}
     <script>
     (function () {
         var KEY = "sidebar-collapsed";

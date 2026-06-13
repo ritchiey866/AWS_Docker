@@ -43,6 +43,7 @@ def create_app(config_name: str | None = None) -> Flask:
         return {
             "current_user": user,
             "current_endpoint": endpoint,
+            "show_sidebar": user is not None and endpoint != "auth.login",
             "items_active": endpoint.startswith("items."),
             "db_active": endpoint.startswith("db_admin."),
         }

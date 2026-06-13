@@ -19,16 +19,32 @@
     {% endif %}
 
     {% for column in columns %}
-        {% set is_serial_pk = column.primary_key and 'serial' in column.type.lower() %}
+        {% set is_autoincrement_pk = column.primary_key and column.autoincrement %}
         <div class="space-y-2">
-            {% if action == 'edit' and is_serial_pk %}
-                <label class="block text-sm font-semibold text-slate-700">{{ column.name }}</label>
+            {% if is_autoincrement_pk %}
+                <label class="block text-sm font-semibold text-slate-700">
+                    {{ column.name }}
+                    <span class="ml-1 font-normal text-slate-400">({{ column.type }})</span>
+                </label>
+                {% if action == 'edit' %}
                 <input type="text" value="{{ row[column.name] }}" disabled
                        class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500">
+                {% else %}
+                <input type="text" value="" disabled placeholder="Auto-generated"
+                       class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500">
+                <p class="text-xs text-slate-500">Assigned automatically from the previous record.</p>
+                {% endif %}
             {% else %}
+                {% set is_user_password = table_name == 'users' and column.name == 'password_hash' %}
                 <label for="{{ column.name }}" class="block text-sm font-semibold text-slate-700">
-                    {{ column.name }}{% if column.primary_key %} <span class="text-rose-500">*</span>{% endif %}
-                    <span class="ml-1 font-normal text-slate-400">({{ column.type }})</span>
+                    {% if is_user_password and action == 'edit' %}
+                        New Password
+                    {% elif is_user_password %}
+                        Password
+                    {% else %}
+                        {{ column.name }}{% if column.primary_key %} <span class="text-rose-500">*</span>{% endif %}
+                        <span class="ml-1 font-normal text-slate-400">({{ column.type }})</span>
+                    {% endif %}
                 </label>
 
                 {% if 'boolean' in column.type.lower() %}
@@ -38,14 +54,23 @@
                     <option value="true" {% if row.get(column.name) == True %}selected{% endif %}>true</option>
                     <option value="false" {% if row.get(column.name) == False %}selected{% endif %}>false</option>
                 </select>
+                {% elif is_user_password and action == 'edit' %}
+                <input type="password" id="{{ column.name }}" name="{{ column.name }}" value=""
+                       maxlength="8" autocomplete="new-password"
+                       class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
+                <p class="text-xs text-slate-500">Leave blank to keep the current password. 8 characters long if changing.</p>
+                {% elif is_user_password %}
+                <input type="password" id="{{ column.name }}" name="{{ column.name }}" value=""
+                       maxlength="8" minlength="8" required autocomplete="new-password"
+                       class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
+                <p class="text-xs text-slate-500">8 characters long.</p>
                 {% elif 'text' in column.type.lower() %}
-                <textarea id="{{ column.name }}" name="{{ column.name }}" rows="3" {% if not column.nullable and not is_serial_pk and action == 'create' %}required{% endif %}
+                <textarea id="{{ column.name }}" name="{{ column.name }}" rows="3" {% if not column.nullable and action == 'create' %}required{% endif %}
                           class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">{{ row.get(column.name, '') }}</textarea>
                 {% else %}
                 <input type="text" id="{{ column.name }}" name="{{ column.name }}"
                        value="{{ row.get(column.name, '') if row.get(column.name) is not none else '' }}"
-                       {% if not column.nullable and not is_serial_pk and action == 'create' %}required{% endif %}
-                       {% if is_serial_pk %}placeholder="Leave blank for auto-increment"{% endif %}
+                       {% if not column.nullable and action == 'create' %}required{% endif %}
                        class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10">
                 {% endif %}
             {% endif %}

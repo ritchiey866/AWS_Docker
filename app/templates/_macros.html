@@ -51,7 +51,7 @@
 {% endmacro %}
 
 {# Form input #}
-{% macro input_field(name, label, value='', type='text', required=false, placeholder='', hint=none, disabled=false) %}
+{% macro input_field(name, label, value='', type='text', required=false, placeholder='', hint=none, disabled=false, maxlength=none, minlength=none, autocomplete=none) %}
 <div class="space-y-2">
     <label for="{{ name }}" class="block text-sm font-semibold text-slate-700">{{ label }}</label>
     <input
@@ -62,6 +62,9 @@
         placeholder="{{ placeholder }}"
         {% if required %}required{% endif %}
         {% if disabled %}disabled{% endif %}
+        {% if maxlength is not none %}maxlength="{{ maxlength }}"{% endif %}
+        {% if minlength is not none %}minlength="{{ minlength }}"{% endif %}
+        {% if autocomplete is not none %}autocomplete="{{ autocomplete }}"{% endif %}
         class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 disabled:cursor-not-allowed disabled:opacity-60"
     >
     {% if hint %}<p class="text-xs text-slate-500">{{ hint }}</p>{% endif %}

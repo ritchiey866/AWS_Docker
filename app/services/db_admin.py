@@ -68,17 +68,26 @@ def get_table_columns(table_name: str) -> list[dict[str, Any]]:
     columns = []
 
     for column in inspector.get_columns(name):
-        columns.append(
-            {
-                "name": column["name"],
-                "type": str(column["type"]),
-                "nullable": column["nullable"],
-                "primary_key": column["name"] in pk_columns,
-                "default": column.get("default"),
-            }
-        )
+        column_meta = {
+            "name": column["name"],
+            "type": str(column["type"]),
+            "nullable": column["nullable"],
+            "primary_key": column["name"] in pk_columns,
+            "default": column.get("default"),
+        }
+        column_meta["autoincrement"] = _is_autoincrement_column(column_meta)
+        columns.append(column_meta)
 
     return columns
+
+
+def _is_autoincrement_column(column: dict[str, Any]) -> bool:
+    if not column.get("primary_key"):
+        return False
+    if "serial" in column.get("type", "").lower():
+        return True
+    default = column.get("default")
+    return default is not None and "nextval" in str(default).lower()
 
 
 def get_primary_key_columns(table_name: str) -> list[str]:
@@ -158,7 +167,9 @@ def fetch_rows(
 
 def _coerce_value(column_meta: dict[str, Any], raw_value: str | None) -> Any:
     if raw_value is None or raw_value == "":
-        if column_meta["primary_key"] and "serial" in column_meta["type"].lower():
+        if column_meta.get("autoincrement") or (
+            column_meta["primary_key"] and "serial" in column_meta["type"].lower()
+        ):
             return None
         return None if column_meta["nullable"] else ""
 
@@ -178,23 +189,84 @@ def _column_meta_map(table_name: str) -> dict[str, dict[str, Any]]:
     return {column["name"]: column for column in get_table_columns(table_name)}
 
 
-def _filter_payload(table_name: str, payload: dict[str, str]) -> dict[str, Any]:
+def _filter_payload(
+    table_name: str,
+    payload: dict[str, str],
+    *,
+    for_insert: bool = False,
+) -> dict[str, Any]:
     columns = _column_meta_map(table_name)
     values: dict[str, Any] = {}
 
     for name, meta in columns.items():
+        if for_insert and meta.get("autoincrement"):
+            continue
         if meta["primary_key"] and "serial" in meta["type"].lower() and name not in payload:
             continue
         if name not in payload:
             continue
         values[name] = _coerce_value(meta, payload.get(name))
 
+    return _apply_table_hooks(table_name, values)
+
+
+def _prepare_user_password_value(raw_value: str) -> str:
+    from werkzeug.security import generate_password_hash
+
+    from app.models.user import User
+
+    if raw_value.startswith(("scrypt:", "pbkdf2:", "argon2:")):
+        return raw_value
+
+    error = User.validate_password(raw_value)
+    if error:
+        raise DbAdminError(f"password_hash: {error}")
+
+    return generate_password_hash(raw_value)
+
+
+def _apply_table_hooks(table_name: str, values: dict[str, Any]) -> dict[str, Any]:
+    if validate_identifier(table_name) != "users":
+        return values
+
+    password = values.get("password_hash")
+    if password is None or password == "":
+        values.pop("password_hash", None)
+    else:
+        values["password_hash"] = _prepare_user_password_value(str(password))
+
     return values
+
+
+def _sync_autoincrement_sequences(table_name: str) -> None:
+    name = validate_identifier(table_name)
+
+    for column in get_table_columns(name):
+        if not column.get("autoincrement"):
+            continue
+
+        default = str(column.get("default") or "")
+        match = re.search(r"nextval\('([^']+)'", default)
+        if not match:
+            continue
+
+        seq_name = match.group(1)
+        if not IDENTIFIER_RE.match(seq_name):
+            continue
+
+        col_name = validate_identifier(column["name"])
+        db.session.execute(
+            text(
+                f'SELECT setval(\'{seq_name}\', '
+                f'COALESCE((SELECT MAX("{col_name}") FROM "{name}"), 0))'
+            )
+        )
 
 
 def insert_row(table_name: str, payload: dict[str, str]) -> None:
     table = reflect_table(table_name)
-    values = _filter_payload(table_name, payload)
+    _sync_autoincrement_sequences(table_name)
+    values = _filter_payload(table_name, payload, for_insert=True)
     db.session.execute(insert(table).values(**values))
     db.session.commit()
 
@@ -219,7 +291,7 @@ def update_row(
     table_name: str,
     pk_values: dict[str, str],
     payload: dict[str, str],
-) -> None:
+) -> bool:
     table = reflect_table(table_name)
     pk_columns = get_primary_key_columns(table_name)
     values = _filter_payload(table_name, payload)
@@ -227,12 +299,16 @@ def update_row(
     for column in pk_columns:
         values.pop(column, None)
 
+    if not values:
+        return False
+
     stmt = update(table)
     for column in pk_columns:
         stmt = stmt.where(table.c[column] == pk_values[column])
 
     db.session.execute(stmt.values(**values))
     db.session.commit()
+    return True
 
 
 def delete_row(table_name: str, pk_values: dict[str, str]) -> None:

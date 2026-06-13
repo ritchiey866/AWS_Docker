@@ -131,8 +131,15 @@ def edit_row(table_name):
 
     if request.method == "POST":
         try:
-            update_row(table_name, pk_values, request.form)
-            flash("Row updated.", "success")
+            if validate_identifier(table_name) == "users":
+                password = request.form.get("password_hash", "")
+                username = request.form.get("username", "").strip()
+                if not password and username == row.get("username", ""):
+                    return redirect(url_for("db_admin.table_detail", table_name=table_name))
+
+            updated = update_row(table_name, pk_values, request.form)
+            if updated:
+                flash("Row updated.", "success")
             return redirect(url_for("db_admin.table_detail", table_name=table_name))
         except (DbAdminError, ValueError) as exc:
             flash(str(exc), "error")
